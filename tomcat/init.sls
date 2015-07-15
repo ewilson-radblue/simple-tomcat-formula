@@ -90,7 +90,8 @@ tomcat_{{ instance }}_files_tomcat_users:
     - group: tomcat
     - mode: 640
     - context: 
-      users: {{ salt['pillar.get']('tomcat:instances:{{ instance }}:settings:users') }}
+      users: |
+        {{ instance_dict['settings']['users'] | indent(8) }}
     - template: jinja
     - require:
       - file: tomcat_{{ instance }}_archive_link_{{ tomcat.version }}
@@ -107,10 +108,10 @@ tomcat_{{ instance }}_files_server:
     - group: tomcat
     - mode: 640
     - context: 
-      shutdown_port: {{ salt['pillar.get']('tomcat:instances:{{ instance }}:settings:ports:shutdown_port', 8005) }}
-      http_port: {{ salt['pillar.get']('tomcat:instances:{{ instance }}:settings:ports:http_port', 8080) }}
-      https_port: {{ salt['pillar.get']('tomcat:instances:{{ instance }}:settings:ports:https_port', 8443) }}
-      ajp_port: {{ salt['pillar.get']('tomcat:instances:{{ instance }}:settings:ports:ajp_port', 8009) }}
+      shutdown_port: {{ instance_dict['settings']['ports'].get('shutdown_port', 8005) }}
+      http_port: {{ instance_dict['settings']['ports'].get('http_port', 8080) }}
+      https_port: {{ instance_dict['settings']['ports'].get('https_port', 8443) }}
+      ajp_port: {{ instance_dict['settings']['ports'].get('ajp_port', 8009) }}
     - template: jinja
     - require:
       - file: tomcat_{{ instance }}_archive_link_{{ tomcat.version }}
@@ -173,7 +174,7 @@ tomcat_{{ instance }}_webapp_{{ webapp }}_deploy:
     - url: {{ webapp_dict.get('manager_url') }}
     - timeout: {{ webapp_dict.get('timeout', 180) }}
     - require:
-      - tomcat_{{ instance }}_service
+      - service: tomcat_{{ instance }}_service
 {% endif %}
 
 {% endfor %}
