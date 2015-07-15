@@ -4,6 +4,8 @@ tomcat:
   archiveHash: md5=656ed4914d68c8a048f29ebe76303796
   archiveFolder: apache-tomcat-7.0.62
   tomcatBase: /srv/tomcat
+  tomcatUser: tomcat
+  tomcatGroup: tomcat
   instances:
     i1:
       settings:

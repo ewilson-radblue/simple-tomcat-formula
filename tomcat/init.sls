@@ -1,27 +1,27 @@
 {%- from 'tomcat/settings.sls' import tomcat with context %}
 
-tomcat_group:
+{{ tomcat.tomcatGroup }}_group:
   group.present:
-    - name: tomcat
+    - name: {{ tomcat.tomcatGroup }}
     - system: true
 
-tomcat_user:
+{{ tomcat.tomcatUser }}_user:
   user.present:
-    - name: tomcat
-    - home: /var/lib/tomcat
+    - name: {{ tomcat.tomcatUser }}
+    - home: /var/lib/{{ tomcat.tomcatUser }}
     - shell: /bin/false
     - system: true
     - empty_password: true
     - groups:
-      - tomcat
+      - {{ tomcat.tomcatGroup }}
     - require:
-      - group: tomcat_group
+      - group: {{ tomcat.tomcatGroup }}_group
 
 tomcat_base_dir:
   file.directory:
     - name: {{ tomcat.tomcatBase }}
-    - user: tomcat
-    - group: tomcat
+    - user: {{ tomcat.tomcatUser }}
+    - group: {{ tomcat.tomcatGroup }}
 
 ### Loop over the instances ###
 {% for instance, instance_dict in salt['pillar.get']('tomcat:instances').items() %}
@@ -32,7 +32,7 @@ tomcat_{{ instance }}_archive:
     - source: {{ tomcat.archiveUrl }}
     - source_hash: {{ tomcat.archiveHash }}
     - archive_format: tar
-    - archive_user: tomcat
+    - archive_user: {{ tomcat.tomcatUser }}
     - tar_options: v
     - if_missing: {{ tomcat.tomcatBase }}/{{ instance }}/{{ tomcat.archiveFolder }}
 
@@ -40,21 +40,21 @@ tomcat_{{ instance }}_archive_link_{{ tomcat.version }}:
   file.symlink:
     - name: {{ tomcat.tomcatBase }}/{{ instance }}/{{ tomcat.version }}
     - target: {{ tomcat.tomcatBase }}/{{ instance }}/{{ tomcat.archiveFolder }}
-    - user: tomcat
-    - group: tomcat
+    - user: {{ tomcat.tomcatUser }}
+    - group: {{ tomcat.tomcatGroup }}
 
 tomcat_{{ instance }}_archive_link_current:
   file.symlink:
     - name: {{ tomcat.tomcatBase }}/{{ instance }}/current
     - target: {{ tomcat.tomcatBase }}/{{ instance }}/{{ tomcat.version }}
-    - user: tomcat
-    - group: tomcat
+    - user: {{ tomcat.tomcatUser }}
+    - group: {{ tomcat.tomcatGroup }}
 
 tomcat_{{ instance }}_files_setenv:
   file.managed:
     - name: {{ tomcat.tomcatBase }}/{{ instance }}/{{ tomcat.version }}/bin/setenv.sh
-    - user: tomcat
-    - group: tomcat
+    - user: {{ tomcat.tomcatUser }}
+    - group: {{ tomcat.tomcatGroup }}
     - mode: 750
     - template: jinja
     - contents_pillar: tomcat:instances:{{ instance }}:files:setenv:contents
@@ -69,8 +69,8 @@ tomcat_{{ instance }}_files_init:
   file.managed:
     - name: /etc/init.d/tomcat-{{ instance }}
     - source: salt://tomcat/files/init
-    - user: tomcat
-    - group: tomcat
+    - user: {{ tomcat.tomcatUser }}
+    - group: {{ tomcat.tomcatGroup }}
     - mode: 755
     - context:
       i_name: {{ instance }}
@@ -86,8 +86,8 @@ tomcat_{{ instance }}_files_tomcat_users:
   file.managed:
     - name: {{ tomcat.tomcatBase }}/{{ instance }}/{{ tomcat.version }}/conf/tomcat-users.xml
     - source: salt://tomcat/files/tomcat_users
-    - user: tomcat
-    - group: tomcat
+    - user: {{ tomcat.tomcatUser }}
+    - group: {{ tomcat.tomcatGroup }}
     - mode: 640
     - context: 
       users: |
@@ -104,8 +104,8 @@ tomcat_{{ instance }}_files_server:
   file.managed:
     - name: {{ tomcat.tomcatBase }}/{{ instance }}/{{ tomcat.version }}/conf/server.xml
     - source: salt://tomcat/files/server
-    - user: tomcat
-    - group: tomcat
+    - user: {{ tomcat.tomcatUser }}
+    - group: {{ tomcat.tomcatGroup }}
     - mode: 640
     - context: 
       shutdown_port: {{ instance_dict['settings']['ports'].get('shutdown_port', 8005) }}
@@ -123,8 +123,8 @@ tomcat_{{ instance }}_files_server:
 tomcat_{{ instance }}_dirperms:
   file.directory:
     - name: {{ tomcat.tomcatBase }}/{{ instance }}
-    - user: tomcat
-    - group: tomcat
+    - user: {{ tomcat.tomcatUser }}
+    - group: {{ tomcat.tomcatGroup }}
     - mode: 755
     - recurse:
       - user
@@ -159,8 +159,8 @@ tomcat_{{ instance }}_webapp_{{ webapp }}_dir:
 {% if webapp_dict.get('source_hash') %}
     - source_hash: {{ webapp_dict.get('source_hash') }}
 {% endif %}
-    - user: tomcat
-    - group: tomcat
+    - user: {{ tomcat.tomcatUser }}
+    - group: {{ tomcat.tomcatGroup }}
     - mode: 644
     - require_in:
       - tomcat_{{ instance }}_dirperms
