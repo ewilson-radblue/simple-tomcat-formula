@@ -1,0 +1,50 @@
+tomcat:
+  version: 7.0.62
+  archiveUrl: http://archive.apache.org/dist/tomcat/tomcat-7/v7.0.62/bin/apache-tomcat-7.0.62.tar.gz
+  archiveHash: md5=656ed4914d68c8a048f29ebe76303796
+  archiveFolder: apache-tomcat-7.0.62
+  tomcatBase: /srv/tomcat
+  instances:
+    i1:
+      settings:
+        ports:
+          shutdown_port: 8005
+          http_port: 8080
+          https_port: 8443
+          ajp_port: 8009
+        users: |
+          <role rolename="manager"/>
+          <user username="admin" password="admin" roles="manager-gui"/>
+          <user username="deploy" password="admin" roles="manager-script,manager-gui"/>
+          <user username="tomcat-salt" password="tomcat-salt-user-password42" roles="manager-script,manager-gui"/>
+      files:
+        setenv:
+          contents: |
+            export \
+            JAVA_OPTS="-Xms128m -Xmx128m" \
+            JAVA_HOME=/usr/lib/java/ \
+            JAVA_OPTS="\
+              -Djava.net.preferIPv4Stack=true \
+              -Dhudson.DNSMultiCast.disabled=true \
+              "
+      webapps:
+        docs:
+          ensure: absent
+        examples:
+          ensure: absent
+        host_manager:
+          alias: host-manager
+          ensure: absent
+        manager:
+          ensure: exists
+        ROOT:
+          ensure: absent
+        test_simple:
+          deployment: simple-war
+          source: salt://only/a/test.war
+          source_hash: md5=aosdofjaojfosdjfosifjapdfj
+        test_managed:
+          deployment: manager-war
+          manager_url: http://localhost:8080/manager
+          source: salt://only/a/test.war
+          timeout: 20
